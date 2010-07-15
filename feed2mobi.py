@@ -22,6 +22,9 @@ from utils.filenames import ascii_filename
 import utils.options
 from utils.options import define, options
 
+import encodings
+encodings.aliases.aliases['gb2312'] = 'gb18030'
+
 CONTENT_TEMPLATE = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -198,11 +201,11 @@ class Feed2mobi:
             self.data_dir = data_dir
         
         socket.setdefaulttimeout(timeout)
-        logging.info("init success")
+        logging.info("Init success")
 
     def create_file(self, filename):
         
-        logging.info("generate: %s" % filename)
+        logging.info("Generate: %s" % filename)
         
         if self.template_path and os.path.isfile(self.template_path+filename):
             t = template.Loader(self.template_path).load(filename)
@@ -282,12 +285,27 @@ class Feed2mobi:
     def get_fulltext(self, url, xpath):
         
         try:
-            req = urllib2.Request(url)
-            req.add_header('User-Agent', self.user_agent)
-            req.add_header('Accept-Language', self.accept_language)
-            response = urllib2.urlopen(req)
             
-            html = response.read()
+            article = self.book_dir+'articles/'
+            hash = hashlib.sha1(url).hexdigest()
+            
+            filename = article+'%s.html' % hash
+            
+            if not os.path.isfile(filename):
+                req = urllib2.Request(url)
+                req.add_header('User-Agent', self.user_agent)
+                req.add_header('Accept-Language', self.accept_language)
+                response = urllib2.urlopen(req)
+                
+                html = response.read()
+                localFile = open(filename, 'wb')
+                localFile.write(response.read())
+                localFile.close()
+            else:
+                localFile = open(filename, 'wb')
+                html = localFile.read()
+                localFile.close()
+                
             html = BeautifulSoup(html).renderContents('utf-8')
             hxs = HtmlXPathSelector(html)
             
@@ -345,7 +363,7 @@ class Feed2mobi:
         
     def parse(self):
         
-        logging.info('parse: %s' % self.url)
+        logging.info('Parse feed: %s' % self.url)
         
         referrer = "https://www.google.com/reader/view/"
         self.feed = feedparser.parse(self.url, agent=self.user_agent,referrer=referrer)
@@ -353,15 +371,18 @@ class Feed2mobi:
         if self.feed.bozo == 1:
             raise self.feed.bozo_exception
 
-        bookir = ascii_filename(self.feed.feed.title)
+        self.ffname = ascii_filename(self.feed.feed.title)
         
-        self.book_dir = '%s%s/' % (self.data_dir, bookir)
+        self.book_dir = '%s%s/' % (self.data_dir, self.ffname)
         
         if os.path.isdir(self.book_dir) is False:
             os.mkdir(self.book_dir, 0777)
             
         if os.path.isdir(self.book_dir+'images/') is False:
             os.mkdir(self.book_dir+'images/', 0777)
+        
+        if os.path.isdir(self.book_dir+'articles/') is False:
+            os.mkdir(self.book_dir+'articles/', 0777)
         
         return self
     
@@ -412,18 +433,19 @@ class Feed2mobi:
         self.create_file('content.opf')
         
         if self.noimage:
-            mobi_file = 'noimage.mobi'
+            mobi_file = '%s_noimage.mobi' % self.ffname
         else:
-            mobi_file = 'book.mobi'
+            mobi_file = '%s.mobi' % self.ffname
+        
+        logging.info("Build mobi file: %s" % mobi_file)
         
         import platform
-        
         ostype = string.lower(platform.system())
         
         if ostype == 'windows':
-            os.system('kindlegen.exe %s -unicode -o %s' % (self.book_dir+"content.opf", mobi_file))
+            os.popen('kindlegen.exe %s -unicode -o %s' % (self.book_dir+"content.opf", self.book_dir+'../'+mobi_file))
         else:
-            os.popen('kindlegen %s -unicode -o %s' % (self.book_dir+"content.opf", mobi_file))
+            os.popen('kindlegen %s -unicode -o %s' % (self.book_dir+"content.opf", self.book_dir+'../'+mobi_file))
         
         return self.book_dir+mobi_file
 
@@ -454,13 +476,15 @@ def main():
         if len(args) >= 2:
             options.url = args[1]
 
-    if not options.test and (options.url is None or not re.match(r'/^http(s)?://[^\s]*$/', options.url)):
-        logging.error("feed url error")
-        sys.exit(1)
-    
+    #if not options.test and (options.url is None or not re.match(r'/^http(s)?:\/\/[^\s]*$/', options.url)):
+    #    logging.error("feed url error")
+    #    sys.exit(1)
+
     if options.test:
        test()
     else:
+        logging.basicConfig(level=logging.DEBUG, format='%(name)-8s %(message)s',
+                datefmt='%m-%d %H:%M') #, filename='log/web.log', filemode='a')
         mobifile = Feed2mobi(options.url,
                 xpath=options.xpath,
                 max_images=options.max_images,
@@ -468,7 +492,10 @@ def main():
                 data_dir=options.data_dir,
             ).parse().build(options.noimage)
         
+        print '-'*50
+        print ''
         print "Output: %s" % mobifile
+        print ''
     
 if __name__ == '__main__':
     main()

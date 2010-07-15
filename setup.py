@@ -21,7 +21,6 @@ setup(
     author = "jerry",
     author_email="lxb429@gmail.com",
     url="http://k.dogear.cn",
-    copyright="k.dogear.cn",
 
     options = options,
     zipfile=None,
