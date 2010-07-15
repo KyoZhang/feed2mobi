@@ -236,6 +236,7 @@ class Feed2mobi:
 
     def down_image(self, url, referer=None):
         
+        logging.info("Downimage: %s" % url)
         url = escape.utf8(url)
         image_guid = hashlib.sha1(url).hexdigest()
         
@@ -284,8 +285,8 @@ class Feed2mobi:
     
     def get_fulltext(self, url, xpath):
         
+        logging.info("GetFulltext: %s xpath:%s" % (url, xpath))
         try:
-            
             article = self.book_dir+'articles/'
             hash = hashlib.sha1(url).hexdigest()
             
@@ -299,7 +300,7 @@ class Feed2mobi:
                 
                 html = response.read()
                 localFile = open(filename, 'wb')
-                localFile.write(response.read())
+                localFile.write(html)
                 localFile.close()
             else:
                 localFile = open(filename, 'wb')
@@ -443,19 +444,19 @@ class Feed2mobi:
         ostype = string.lower(platform.system())
         
         if ostype == 'windows':
-            os.popen('kindlegen.exe %s -unicode -o %s' % (self.book_dir+"content.opf", self.book_dir+'../'+mobi_file))
+            os.system('kindlegen.exe %s -unicode -o %s' % (self.book_dir+"content.opf", mobi_file))
         else:
-            os.popen('kindlegen %s -unicode -o %s' % (self.book_dir+"content.opf", self.book_dir+'../'+mobi_file))
+            os.popen('kindlegen %s -unicode -o %s' % (self.book_dir+"content.opf", mobi_file))
         
         return self.book_dir+mobi_file
 
 define("url", help="feed url")
-define("xpath", default=False, help="full text xpath")
-define("max_images", default=10, help="test mode", type=int)
-define("template_path", default='', help="templates dir")
-define("data_dir", default='', help="data dir")
-define("test", default=False, help="test mode")
-define("noimage", default=False, help="no images")
+define("xpath", default=None, help="full text xpath")
+define("max_images", default=10, help="max images in per item", type=int)
+define("template_path", default=None, help="templates directory")
+define("data_dir", default=None, help="data directory")
+define("test", default=False, help="test", type=bool)
+define("noimage", default=False, help="no image", type=bool)
 
 def test():
     feeds = [

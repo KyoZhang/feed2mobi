@@ -154,13 +154,14 @@ def print_help(file=sys.stdout):
         by_file.setdefault(option.file_name, []).append(option)
 
     for filename, o in sorted(by_file.items()):
-        if filename: print >> file, filename
+        #if filename: print >> file, filename
         o.sort(key=lambda option: option.name)
         for option in o:
-            prefix = option.name
-            if option.metavar:
-                prefix += "=" + option.metavar
-            print >> file, "  --%-30s %s" % (prefix, option.help or "")
+            if option.name not in ['logging', 'log_to_stderr', 'log_file_prefix', 'log_file_max_size', 'log_file_num_backups']:
+                prefix = option.name
+                if option.metavar:
+                    prefix += "=" + option.metavar
+                print >> file, "  --%-30s %s" % (prefix, option.help or "")
     print >> file
 
 
