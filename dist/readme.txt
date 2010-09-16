@@ -1,15 +1,15 @@
-ÔÚcmdÏÂÔØÔËĞĞ
+åœ¨cmdä¸‹è½½è¿è¡Œ
 
-feed2mobi.exe -url=url »ò feed2mobi.exe url
+feed2mobi.exe -url=url æˆ– feed2mobi.exe url
 
-Èç£º
+å¦‚ï¼š
 
 feed2mobi.exe -url=http://www.cnbeta.com/backend.php
 feed2mobi.exe -url=http://cn.engadget.com/rss.xml
 
 
-Èç¹ûÒª×¥È¡È«ÎÄÖ»ĞèÌá¹©ÕıÎÄËùÔÚxpath¼´¿É
+å¦‚æœè¦æŠ“å–å…¨æ–‡åªéœ€æä¾›æ­£æ–‡æ‰€åœ¨xpathå³å¯
 
-Èç£º
+å¦‚ï¼š
 
 feed2mobi.exe -url=http://www.cnbeta.com/backend.php -xpath="//div[@id='news_content']"

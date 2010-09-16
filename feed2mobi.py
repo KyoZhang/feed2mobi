@@ -235,7 +235,6 @@ class Feed2mobi:
         fp.close()
 
     def down_image(self, url, referer=None):
-        
         logging.info("Downimage: %s" % url)
         url = escape.utf8(url)
         image_guid = hashlib.sha1(url).hexdigest()
@@ -316,6 +315,27 @@ class Feed2mobi:
             return content
         except:
             return False
+    
+    def absolute_path(url, purl):
+        """将相对路径的url转换为绝对路径"""
+        
+        if re.match(r'^http(s)?://.*', im):
+            return url
+    
+        paths = purl.split('/')
+        url_parse = url.split('/')
+        
+        if not re.match(r'/.*', url) is None:
+            return paths[0]+'/'+paths[1]+'/'+paths[2]+url        
+        else:
+            n = ''
+            y = 0
+            for x in paths:
+                if y < len(paths)-1:
+                    n = n +'/'+x
+                    y = y + 1
+            
+            return n+'/'+url
         
     def parse_summary(self, summary, link):
         
@@ -351,7 +371,8 @@ class Feed2mobi:
             if self.noimage or img_count >= self.max_images:
                 img.extract()
             else:
-                image = self.down_image(img['src'], link)
+                image_url = absolute_path(img['src'], link)
+                image = self.down_image(image_url, link)
 
                 if image:
                     img['src'] = image
@@ -374,7 +395,19 @@ class Feed2mobi:
 
         self.ffname = ascii_filename(self.feed.feed.title)
         
-        self.book_dir = '%s%s/' % (self.data_dir, self.ffname)
+        self.book_dir = '%s%s' % (self.data_dir, self.ffname)
+        
+        #如果目录存在换个名字
+        #i,tmpdir = 1,self.book_dir
+        #while True:
+        #    if os.path.isdir(tmpdir):
+        #        tmpdir = self.book_dir + ('(%s)' % i)
+        #        i = i + 1
+        #    else:
+        #        self.book_dir = tmpdir
+        #        break
+
+        self.book_dir = self.book_dir + '/'
         
         if os.path.isdir(self.book_dir) is False:
             os.mkdir(self.book_dir, 0777)
